@@ -8,6 +8,9 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, pyqtSignal
 
 class StagedTargetTab(QWidget):
+    # ロガー設定
+    from src.skill_matrix_manager.utils.debug_logger import DebugLogger
+    logger = DebugLogger.get_logger()
     """段階的な目標値設定タブ"""
     
     # データ変更通知用シグナル
@@ -430,165 +433,225 @@ class StagedTargetTab(QWidget):
         self.data_changed.emit()
     
     def show_radar_chart(self):
-        """レーダーチャート表示ダイアログの表示"""
-        from .radar_chart_dialog import RadarChartDialog
+        """レーダーチャートを表示する"""
+        from src.skill_matrix_manager.utils.debug_logger import DebugLogger
+        logger = DebugLogger.get_logger()
         
-        stages_data = self.get_staged_data()
-        
-        if not stages_data:
-            QMessageBox.warning(self, "データ不足", "表示可能なデータがありません。\n段階的な目標値を正しく設定してください。")
-            return
-            
-        # レーダーチャートダイアログを表示
-        dialog = RadarChartDialog(self, stages_data, compare_mode=False)
-        dialog.exec_()
-
-    def add_staged_targets_tab(self):
-        """段階的な目標設定タブを追加"""
-        # 段階的目標タブ
-        staged_tab = QWidget()
-        staged_layout = QVBoxLayout()
-        
-        # スクロールエリア
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        
-        # 内部コンテンツウィジェット
-        content_widget = QWidget()
-        content_layout = QVBoxLayout()
-        
-        # タイトルとヘルプテキスト
-        title_label = QLabel("段階的な目標設定")
-        title_label.setStyleSheet("font-size: 16px; font-weight: bold;")
-        content_layout.addWidget(title_label)
-        
-        help_text = QLabel("各段階でのスキル目標値を設定します。現在値と目標値を比較表示できます。")
-        help_text.setWordWrap(True)
-        content_layout.addWidget(help_text)
-        
-        # スキル段階選択
-        stages_layout = QHBoxLayout()
-        stages_layout.addWidget(QLabel("表示する段階:"))
-        
-        # 段階の選択（チェックボックス）
-        stages = self.generate_test_data()
-        self.stage_checkboxes = []
-        
-        for i, stage in enumerate(stages):
-            stage_name = stage.get('name', f'段階{i+1}')
-            checkbox = QCheckBox(stage_name)
-            checkbox.setChecked(True)  # デフォルトでは全て選択
-            stages_layout.addWidget(checkbox)
-            self.stage_checkboxes.append(checkbox)
-        
-        content_layout.addLayout(stages_layout)
-        
-        # コンテンツをセット
-        content_widget.setLayout(content_layout)
-        scroll.setWidget(content_widget)
-        staged_layout.addWidget(scroll)
-        
-        # ボタン配置
-        button_layout = QHBoxLayout()
-        button_layout.addStretch(1)
-        
-        # 比較チャート表示ボタン
-        compare_button = QPushButton("比較チャート表示")
-        compare_button.clicked.connect(self.show_comparison_chart)
-        button_layout.addWidget(compare_button)
-        
-        staged_layout.addLayout(button_layout)
-        staged_tab.setLayout(staged_layout)
-        
-        # タブに追加
-        self.tabs.addTab(staged_tab, "段階的目標")
-
-    def add_staged_targets_tab(self):
-        """段階的な目標設定タブを追加"""
-        # 段階的目標タブ
-        staged_tab = QWidget()
-        staged_layout = QVBoxLayout()
-        
-        # スクロールエリア
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        
-        # 内部コンテンツウィジェット
-        content_widget = QWidget()
-        content_layout = QVBoxLayout()
-        
-        # タイトルとヘルプテキスト
-        title_label = QLabel("段階的な目標設定")
-        title_label.setStyleSheet("font-size: 16px; font-weight: bold;")
-        content_layout.addWidget(title_label)
-        
-        help_text = QLabel("各段階でのスキル目標値を設定します。現在値と目標値を比較表示できます。")
-        help_text.setWordWrap(True)
-        content_layout.addWidget(help_text)
-        
-        # スキル段階選択
-        stages_layout = QHBoxLayout()
-        stages_layout.addWidget(QLabel("表示する段階:"))
-        
-        # 段階の選択（チェックボックス）
-        stages = self.generate_test_data()
-        self.stage_checkboxes = []
-        
-        for i, stage in enumerate(stages):
-            stage_name = stage.get('name', f'段階{i+1}')
-            checkbox = QCheckBox(stage_name)
-            checkbox.setChecked(True)  # デフォルトでは全て選択
-            stages_layout.addWidget(checkbox)
-            self.stage_checkboxes.append(checkbox)
-        
-        content_layout.addLayout(stages_layout)
-        
-        # コンテンツをセット
-        content_widget.setLayout(content_layout)
-        scroll.setWidget(content_widget)
-        staged_layout.addWidget(scroll)
-        
-        # ボタン配置
-        button_layout = QHBoxLayout()
-        button_layout.addStretch(1)
-        
-        # 比較チャート表示ボタン
-        compare_button = QPushButton("比較チャート表示")
-        compare_button.clicked.connect(self.show_comparison_chart)
-        button_layout.addWidget(compare_button)
-        
-        staged_layout.addLayout(button_layout)
-        staged_tab.setLayout(staged_layout)
-        
-        # タブに追加
-        self.tabs.addTab(staged_tab, "段階的目標")
-
-    def show_comparison_chart(self):
-        """現在値と目標値を比較するレーダーチャートを表示"""
         try:
-            self.logger.debug("比較チャート表示")
+            from .radar_chart_dialog import RadarChartDialog
             
-            # 選択された段階を取得
-            selected_stages = []
-            for i, checkbox in enumerate(self.stage_checkboxes):
-                if checkbox.isChecked():
-                    selected_stages.append(i)
+            # ステージデータを取得
+            logger.info("チャートデータ取得開始")
+            stages_data = self.get_chart_data()
             
-            if not selected_stages:
-                QMessageBox.warning(self, "警告", "表示する段階を1つ以上選択してください")
-                return
-            
-            # テストデータを使用
-            stages = self.generate_test_data()
-            
-            # 選択された段階のみを抽出
-            selected_data = [stages[i] for i in selected_stages]
-            
-            self.logger.info(f"比較チャートダイアログの表示: {len(selected_data)}ステージ")
-            dialog = RadarChartDialog(self, selected_data, compare_mode=True)
-            dialog.exec_()
-            
+            if stages_data:
+                logger.info(f"チャートダイアログの表示: {len(stages_data)}ステージ")
+                # オリジナルの引数順序で呼び出し (parent, stages_data)
+                dialog = RadarChartDialog(self, stages_data)
+                dialog.exec_()
+            else:
+                logger.warning("チャートデータが取得できませんでした")
         except Exception as e:
-            self.logger.error(f"比較チャート表示エラー: {str(e)}")
+            logger.error(f"レーダーチャート表示エラー: {e}")
+            import traceback
             traceback.print_exc()
-            QMessageBox.critical(self, "エラー", f"比較チャート表示中にエラーが発生しました: {str(e)}")
+    
+    def get_chart_data(self):
+        """複数段階のチャートデータを生成"""
+        from src.skill_matrix_manager.utils.debug_logger import DebugLogger
+        logger = DebugLogger.get_logger()
+        
+        # 複数段階のデータを直接定義
+        stages_data = [
+            {
+                "name": "現在",
+                "targets": {
+                    "Python": 2.0,
+                    "SQL": 1.5,
+                    "UI/UX設計": 3.0,
+                    "問題分析": 2.0,
+                    "コミュニケーション": 2.5
+                }
+            },
+            {
+                "name": "3ヶ月後",
+                "time": 3,
+                "unit": "ヶ月",
+                "targets": {
+                    "Python": 3.0,
+                    "SQL": 2.5,
+                    "UI/UX設計": 3.5,
+                    "問題分析": 2.5,
+                    "コミュニケーション": 3.0
+                }
+            },
+            {
+                "name": "6ヶ月後",
+                "time": 6,
+                "unit": "ヶ月",
+                "targets": {
+                    "Python": 3.5,
+                    "SQL": 3.0,
+                    "UI/UX設計": 4.0,
+                    "問題分析": 3.0,
+                    "コミュニケーション": 3.5
+                }
+            },
+            {
+                "name": "9ヶ月後",
+                "time": 9,
+                "unit": "ヶ月",
+                "targets": {
+                    "Python": 4.5,
+                    "SQL": 3.5,
+                    "UI/UX設計": 4.5,
+                    "問題分析": 3.5,
+                    "コミュニケーション": 3.8
+                }
+            },
+            {
+                "name": "目標",
+                "time": 12,
+                "unit": "ヶ月",
+                "targets": {
+                    "Python": 5.0,
+                    "SQL": 4.0,
+                    "UI/UX設計": 5.0,
+                    "問題分析": 4.0,
+                    "コミュニケーション": 4.5
+                }
+            }
+        ]
+        
+        logger.info(f"ステージデータ: {len(stages_data)}段階")
+        for i, stage in enumerate(stages_data):
+            skill_count = len(stage.get('targets', {}))
+            logger.info(f"  段階{i+1}: {stage.get('name', f'段階{i+1}')} ({skill_count}スキル)")
+            
+        return stages_data
+    def get_chart_data(self):
+        """複数段階のチャートデータを生成"""
+        from src.skill_matrix_manager.utils.debug_logger import DebugLogger
+        logger = DebugLogger.get_logger()
+        
+        # 複数段階のデータを直接定義
+        stages_data = [
+            {
+                "name": "現在",
+                "targets": {
+                    "Python": 2.0,
+                    "SQL": 1.5,
+                    "UI/UX設計": 3.0,
+                    "問題分析": 2.0,
+                    "コミュニケーション": 2.5
+                }
+            },
+            {
+                "name": "3ヶ月後",
+                "time": 3,
+                "unit": "ヶ月",
+                "targets": {
+                    "Python": 3.0,
+                    "SQL": 2.5,
+                    "UI/UX設計": 3.5,
+                    "問題分析": 2.5,
+                    "コミュニケーション": 3.0
+                }
+            },
+            {
+                "name": "6ヶ月後",
+                "time": 6,
+                "unit": "ヶ月",
+                "targets": {
+                    "Python": 3.5,
+                    "SQL": 3.0,
+                    "UI/UX設計": 4.0,
+                    "問題分析": 3.0,
+                    "コミュニケーション": 3.5
+                }
+            },
+            {
+                "name": "9ヶ月後",
+                "time": 9,
+                "unit": "ヶ月",
+                "targets": {
+                    "Python": 4.5,
+                    "SQL": 3.5,
+                    "UI/UX設計": 4.5,
+                    "問題分析": 3.5,
+                    "コミュニケーション": 3.8
+                }
+            },
+            {
+                "name": "目標",
+                "time": 12,
+                "unit": "ヶ月",
+                "targets": {
+                    "Python": 5.0,
+                    "SQL": 4.0,
+                    "UI/UX設計": 5.0,
+                    "問題分析": 4.0,
+                    "コミュニケーション": 4.5
+                }
+            }
+        ]
+        
+        logger.info(f"ステージデータ: {len(stages_data)}段階")
+        for i, stage in enumerate(stages_data):
+            skill_count = len(stage.get('targets', {}))
+            logger.info(f"  段階{i+1}: {stage.get('name', f'段階{i+1}')} ({skill_count}スキル)")
+            
+        return stages_data
+    
+    def generate_test_data(self, num_skills=5):
+        """テストデータを生成"""
+        logging.debug("テストデータ生成")
+        import random
+        
+        # スキル名のリスト
+        skill_names = [
+            "Python", "JavaScript", "SQL", "データ分析", "機械学習",
+            "UIデザイン", "APIテスト", "CI/CD", "サーバー管理", "セキュリティ"
+        ]
+        
+        # 使用するスキル名を選択
+        selected_skills = skill_names[:num_skills] if num_skills <= len(skill_names) else skill_names
+        
+        # 段階名と期間
+        stages = [
+            {"name": "現在", "months": 0},
+            {"name": "3ヶ月後", "months": 3},
+            {"name": "6ヶ月後", "months": 6},
+            {"name": "9ヶ月後", "months": 9},
+            {"name": "目標", "months": 12}
+        ]
+        
+        # 各段階のスキルデータを生成
+        stage_data = []
+        base_values = [random.randint(1, 3) for _ in range(len(selected_skills))]
+        
+        for i, stage in enumerate(stages):
+            # 進捗に応じて値を増加
+            progress_factor = i / (len(stages) - 1)  # 0から1の範囲
+            
+            skills = []
+            for j, skill_name in enumerate(selected_skills):
+                # 基本値から段階に応じて値を増加（最大5）
+                base_val = base_values[j]
+                value = min(5, base_val + (5 - base_val) * progress_factor)
+                # 小数点以下を切り捨て
+                value = int(value)
+                
+                skills.append({
+                    "name": skill_name,
+                    "value": value
+                })
+            
+            stage_data.append({
+                "name": stage["name"],
+                "months": stage["months"],
+                "skills": skills
+            })
+        
+        logging.debug(f"生成したテストデータ: {stage_data}")
+        return stage_data

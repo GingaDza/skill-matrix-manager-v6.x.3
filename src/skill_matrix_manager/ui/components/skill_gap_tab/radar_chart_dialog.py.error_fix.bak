@@ -14,14 +14,15 @@ from matplotlib.figure import Figure
 class RadarChartDialog(QDialog):
     """レーダーチャートを表示するダイアログ"""
     
-    def __init__(self, parent, stages_data, compare_mode=False):  # ここに compare_mode=False を追加
+    def __init__(self, parent, stages_data):
         super().__init__(parent)
         self.stages_data = stages_data
-        self.compare_mode = compare_mode  # compare_mode を self に代入
         
         self.setWindowTitle("スキルギャップ分析 - レーダーチャート")
         self.setMinimumSize(800, 600)
         
+        # 比較モード
+        self.compare_mode = compare_mode
         self.setup_ui()
     
     def setup_ui(self):

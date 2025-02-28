@@ -1,0 +1,56 @@
+=== タブ機能デバッグログ ===
+日時: 2025-02-28 21:06:40.380578
+
+=== メインウィンドウ確認 ===
+ファイルサイズ: 7700 bytes
+add_category_tabメソッド: なし
+_save_tab_configメソッド: なし
+jsonモジュールのインポート: なし
+
+=== 設定タブ確認 ===
+ファイルサイズ: 7679 bytes
+add_new_tabメソッド: なし
+add_tab_btnの定義: あり
+QMessageBoxのインポート: あり
+
+=== タブ設定ファイル確認 ===
+内容:
+{
+    "version": "1.0.0",
+    "timestamp": "2025-02-20 01:45:51",
+    "user": "GingaDza",
+    "layout": {
+        "split_ratio": "3:7",
+        "left_panel": {
+            "components": [
+                "group_combo",
+                "user_list",
+                "user_buttons"
+            ]
+        },
+        "right_panel": {
+            "main_tabs": [
+                {
+                    "name": "カテゴリータブ",
+                    "dynamic": true
+                },
+                {
+                    "name": "スキル分析",
+                    "subtabs": [
+                        "総合評価",
+                        "スキルギャップ"
+                    ]
+                },
+                {
+                    "name": "システム管理",
+                    "subtabs": [
+                        "初期設定",
+                        "データ入出力",
+                        "システム情報"
+                    ]
+                }
+            ]
+        }
+    }
+}
+

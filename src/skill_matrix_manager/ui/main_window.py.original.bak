@@ -219,7 +219,6 @@ class MainWindow(QMainWindow):
         # TODO: ユーザー削除の実装
 
     def add_category_tab(self, category_name):
-        print(f"=== add_category_tab メソッドが呼び出されました: {category_name} ====")
         """カテゴリータブを追加"""
         # 既存タブ確認
         for i in range(self.tabs.count()):

@@ -1,0 +1,283 @@
+#!/usr/bin/env python3
+import os
+
+def fix_file():
+    file_path = "src/skill_matrix_manager/ui/components/skill_gap_tab/staged_target_tab.py"
+    
+    # バックアップ作成
+    backup_path = file_path + ".complete.bak"
+    os.system(f"cp {file_path} {backup_path}")
+    print(f"バックアップ作成: {backup_path}")
+    
+    # 正常なファイルをコピー
+    with open(file_path, "w") as f:
+        f.write('''"""
+スキルギャップタブのメインクラス - 段階的なスキル目標設定と管理
+"""
+import logging
+import traceback
+import math
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
+                             QLabel, QTabWidget, QMessageBox, QScrollArea)
+from PyQt5.QtCore import Qt
+
+from .radar_chart_dialog import RadarChartDialog
+
+class StagedTargetTab(QWidget):
+    """スキルギャップタブ - 段階的なスキル目標の設定・管理用タブ"""
+    
+    def __init__(self, parent=None):
+        """初期化"""
+        super(StagedTargetTab, self).__init__(parent)
+        # ロギング設定
+        self.logger = logging.getLogger('StagedTargetTab')
+        self.logger.debug("スキルギャップタブを初期化")
+        
+        # UI初期化
+        self.setup_ui()
+    
+    def setup_ui(self):
+        """UIコンポーネントのセットアップ"""
+        # メインレイアウト
+        main_layout = QVBoxLayout()
+        
+        # ヘッダー部分
+        header_layout = QHBoxLayout()
+        title_label = QLabel("スキルギャップ分析")
+        title_label.setStyleSheet("font-size: 18px; font-weight: bold;")
+        header_layout.addWidget(title_label)
+        header_layout.addStretch(1)
+        
+        # アクションボタン
+        chart_button = QPushButton("レーダーチャート表示")
+        chart_button.clicked.connect(self.show_radar_chart)
+        header_layout.addWidget(chart_button)
+        
+        # レイアウトに追加
+        main_layout.addLayout(header_layout)
+        
+        # タブウィジェット
+        self.tabs = QTabWidget()
+        main_layout.addWidget(self.tabs)
+        
+        # タブを設定
+        self.setup_tabs()
+        
+        # レイアウト適用
+        self.setLayout(main_layout)
+    
+    def setup_tabs(self):
+        """タブウィジェットの内容を設定"""
+        # サンプルとしてタブを追加
+        self.add_sample_tabs()
+    
+    def add_sample_tabs(self):
+        """サンプルタブを追加"""
+        # 現在のスキル
+        current_tab = QWidget()
+        current_layout = QVBoxLayout()
+        current_label = QLabel("現在のスキルレベル")
+        current_layout.addWidget(current_label)
+        current_tab.setLayout(current_layout)
+        self.tabs.addTab(current_tab, "現在")
+        
+        # 目標スキル
+        target_tab = QWidget()
+        target_layout = QVBoxLayout()
+        target_label = QLabel("目標スキルレベル")
+        target_layout.addWidget(target_label)
+        target_tab.setLayout(target_layout)
+        self.tabs.addTab(target_tab, "目標")
+        
+        # ギャップ
+        gap_tab = QWidget()
+        gap_layout = QVBoxLayout()
+        gap_label = QLabel("スキルギャップ")
+        gap_layout.addWidget(gap_label)
+        gap_tab.setLayout(gap_layout)
+        self.tabs.addTab(gap_tab, "ギャップ")
+    
+    def show_radar_chart(self):
+        """レーダーチャートを表示するダイアログを開く"""
+        try:
+            self.logger.debug("チャートデータ取得開始")
+            
+            # テストデータを使用
+            use_test_data = True
+            if use_test_data:
+                self.logger.debug("テストデータを使用します")
+                stages = self.generate_test_data(num_skills=5)
+            else:
+                self.logger.debug("実データを使用します")
+                stages = self.get_stage_skills()
+                
+            self.logger.debug(f"ステージデータ: {len(stages)}段階")
+            
+            # ステージデータの変換
+            stages_data = []
+            
+            for i, stage in enumerate(stages):
+                stage_name = stage.get('name', f'段階{i+1}')
+                stage_skills = stage.get('skills', [])
+                
+                self.logger.debug(f"  段階{i+1}: {stage_name} ({len(stage_skills)}スキル)")
+                
+                stages_data.append({
+                    'name': stage_name,
+                    'skills': stage_skills
+                })
+            
+            self.logger.info(f"チャートダイアログの表示: {len(stages_data)}ステージ")
+            dialog = RadarChartDialog(self, stages_data)
+            dialog.exec_()
+            
+        except Exception as e:
+            self.logger.error(f"レーダーチャート表示エラー: {str(e)}")
+            traceback.print_exc()
+            QMessageBox.critical(self, "エラー", f"レーダーチャート表示中にエラーが発生しました: {str(e)}")
+    
+    def get_stage_skills(self):
+        """段階的なスキルデータを取得"""
+        self.logger.debug("get_stage_skills メソッド呼び出し")
+        
+        # ダミーデータを返す
+        return [
+            {
+                "name": "現在",
+                "skills": [
+                    {"name": "Python", "value": 3},
+                    {"name": "JavaScript", "value": 2},
+                    {"name": "データ分析", "value": 1},
+                    {"name": "機械学習", "value": 2},
+                    {"name": "コミュニケーション", "value": 3}
+                ]
+            },
+            {
+                "name": "3ヶ月後",
+                "skills": [
+                    {"name": "Python", "value": 4},
+                    {"name": "JavaScript", "value": 3},
+                    {"name": "データ分析", "value": 2},
+                    {"name": "機械学習", "value": 3},
+                    {"name": "コミュニケーション", "value": 3}
+                ]
+            },
+            {
+                "name": "6ヶ月後",
+                "skills": [
+                    {"name": "Python", "value": 4},
+                    {"name": "JavaScript", "value": 3},
+                    {"name": "データ分析", "value": 3},
+                    {"name": "機械学習", "value": 3},
+                    {"name": "コミュニケーション", "value": 4}
+                ]
+            },
+            {
+                "name": "9ヶ月後",
+                "skills": [
+                    {"name": "Python", "value": 5},
+                    {"name": "JavaScript", "value": 4},
+                    {"name": "データ分析", "value": 4},
+                    {"name": "機械学習", "value": 4},
+                    {"name": "コミュニケーション", "value": 4}
+                ]
+            },
+            {
+                "name": "目標",
+                "skills": [
+                    {"name": "Python", "value": 5},
+                    {"name": "JavaScript", "value": 4},
+                    {"name": "データ分析", "value": 5},
+                    {"name": "機械学習", "value": 5},
+                    {"name": "コミュニケーション", "value": 5}
+                ]
+            }
+        ]
+    
+    def generate_test_data(self, num_skills=5):
+        """テストデータを生成"""
+        self.logger.debug("テストデータ生成")
+        import random
+        
+        # スキル名のリスト
+        skill_names = [
+            "Python", "JavaScript", "SQL", "データ分析", "機械学習",
+            "UIデザイン", "APIテスト", "CI/CD", "サーバー管理", "セキュリティ"
+        ]
+        
+        # 使用するスキル名を選択
+        selected_skills = skill_names[:num_skills] if num_skills <= len(skill_names) else skill_names
+        
+        # 段階名と期間
+        stages = [
+            {"name": "現在", "months": 0},
+            {"name": "3ヶ月後", "months": 3},
+            {"name": "6ヶ月後", "months": 6},
+            {"name": "9ヶ月後", "months": 9},
+            {"name": "目標", "months": 12}
+        ]
+        
+        # 各段階のスキルデータを生成
+        stage_data = []
+        base_values = [random.randint(1, 3) for _ in range(len(selected_skills))]
+        
+        for i, stage in enumerate(stages):
+            # 進捗に応じて値を増加
+            progress_factor = i / (len(stages) - 1)  # 0から1の範囲
+            
+            skills = []
+            for j, skill_name in enumerate(selected_skills):
+                # 基本値から段階に応じて値を増加（最大5）
+                base_val = base_values[j]
+                value = min(5, base_val + (5 - base_val) * progress_factor)
+                # 小数点以下を切り捨て
+                value = int(value)
+                
+                skills.append({
+                    "name": skill_name,
+                    "value": value
+                })
+            
+            stage_data.append({
+                "name": stage["name"],
+                "months": stage["months"],
+                "skills": skills
+            })
+        
+        self.logger.debug(f"生成したテストデータ: {stage_data}")
+        return stage_data
+''')
+    
+    print("ファイルを完全に書き換えました")
+    return True
+
+def fix_radar_chart_dialog():
+    file_path = "src/skill_matrix_manager/ui/components/skill_gap_tab/radar_chart_dialog.py"
+    
+    # バックアップ作成
+    backup_path = file_path + ".complete.bak"
+    os.system(f"cp {file_path} {backup_path}")
+    print(f"レーダーチャートダイアログのバックアップ作成: {backup_path}")
+    
+    # ファイル全体をチェック
+    with open(file_path, "r") as f:
+        content = f.read()
+    
+    # draw_chartメソッド修正
+    if "def draw_chart" in content and "if not skills:" in content:
+        content = content.replace(
+            "if not skills:", 
+            "if not skills or len(skills) == 0:"
+        )
+        
+        # 保存
+        with open(file_path, "w") as f:
+            f.write(content)
+        
+        print("レーダーチャートダイアログのdraw_chartメソッドを修正しました")
+    
+    return True
+
+# 実行
+fix_file()
+fix_radar_chart_dialog()
